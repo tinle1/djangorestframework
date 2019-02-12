@@ -1,0 +1,22 @@
+Tutorial 1: Serialization
+
+step 1:  Introduction
+
+
+
+step 2: Setting up a new environment
+
+step 3: Getting started
+
+step 4: Creating a model
+
+step 5: Creating a Serializer
+
+step 6: Working with Serializers
+
+step 7: Using ModelSerializers
+
+step 8: Writign regular django views using our Serializer
+
+step 9: Testing our first attempt at a Web API
+

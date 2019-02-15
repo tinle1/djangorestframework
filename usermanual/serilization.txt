@@ -1,20 +1,134 @@
 Tutorial 1: Serialization
 
-step 1:  Introduction
+Step 1: Introduction
 
+Code for tutorial available in the https://github.com/encode/rest-framework-tutorial repository
 
+Step 2: Setting up a new environment
 
-step 2: Setting up a new environment
+- activate virtualenv
+- install our package requirements: django , djangorestframework, pygments
 
 step 3: Getting started
 
+- Create a new project to work with
+cd ~
+django-admin startproject tutorial
+cd tutorial
+
+- create an app that we'll use to create a simple Web API
+
+python manage.py startapp snippets
+
+- Add our new snippets app and rest_framework app to INSTALLED_APPS  in tutorial/settings.py file:
+
+INSTALLED_APPS = (
+    ...
+    'rest_framework',
+    'snippets.apps.SnippetsConfig',
+)
+
 step 4: Creating a model
 
-step 5: Creating a Serializer
+Create simple Snippet model that is used to store code snippets.  Edit snippets/models.py file.
+
+from django.db import models
+from pygments.lexers import get_all_lexers
+from pygments.styles import get_all_styles
+
+LEXERS = [item for item in get_all_lexers() if item[1]]
+LANGUAGE_CHOICES = sorted([(item[1][0], item[0]) for item in LEXERS])
+STYLE_CHOICES = sorted ((item, item) for item in get_all_styles())
+
+class Snippet(models.Model):
+	created = models.DateTimeField(auto_now_add = True)
+	title = models.CharField(max_length = 100, blank = True, default = '')
+	code = models.TextField()
+	linenos = models.BooleanField(default = False)
+	language = models.CharField(choices = LANGUAGE_CHOICES, default = 'python', max_length = 100)
+	style = models.CharField(choices = STYLE_CHOICES, default = 'friendly', max_length = 100)
+		
+	class Meta:
+		ordering = ('created',)
+
+Create an initial migration for our snippets model and sync the datebase for the first time
+
+python manage.py makemigrations snippets 
+python manage.py migrate
+
+
+step 5: Creating a Serializer class
+
+The first thing we need to get started on our Web API is to provide away of serialiazing and deserializing the snipper instances into representaions such as json.
+
+Create a file in the snippets directory named serializers.py and add folowing:
+# import libraries
+
+from rest_framework import serializers
+from snippets.models import Snippet, LANGUAGE_CHOICES, STYLE_CHOICES
+
+"""
+defines the fields that get serialized/deserialized
+"""
+class SnippetSerializer(serializers.Serializer):
+    id = serializers.IntegerField(read_only=True)
+    title = serializers.CharField(required=False, allow_blank=True, max_length=100)
+    code = serializers.CharField(style={'base_template': 'textarea.html'})
+    linenos = serializers.BooleanField(required=False)
+    language = serializers.ChoiceField(choices=LANGUAGE_CHOICES, default='python')
+    style = serializers.ChoiceField(choices=STYLE_CHOICES, default='friendly')
+
+"""
+The create() and update() methods define how fully fledged instances are created or modified when calling serializer.save()
+"""
+
+    def create(self, validated_data):
+        """
+        Create and return a new `Snippet` instance, given the validated data.
+        """
+        return Snippet.objects.create(**validated_data)
+
+    def update(self, instance, validated_data):
+        """
+        Update and return an existing `Snippet` instance, given the validated data.
+        """
+        instance.title = validated_data.get('title', instance.title)
+        instance.code = validated_data.get('code', instance.code)
+        instance.linenos = validated_data.get('linenos', instance.linenos)
+        instance.language = validated_data.get('language', instance.language)
+        instance.style = validated_data.get('style', instance.style)
+        instance.save()
+        return instance
+
 
 step 6: Working with Serializers
 
+Drop into Django shell
+
+	python manage.py shell
+Create couple of code snippets to work with
+
+	from snippets.models import Snippet
+	from snippets.serializers import SnippetSerializer
+	from rest_framework.renderers import JSONRenderer
+	from rest_framework.parsers import JSONParser
+
+	snippet = Snippet(code='foo = "bar"\n')
+	snippet.save()
+
+	snippet = Snippet(code='print "hello, world"\n')
+	snippet.save()
+
+Let's take a look at serializing one of those instances
+
+	serializer = SnippetSerializer(snippet)
+	serializer.data
+	# {'id': 2, 'title': u'', 'code': u'print "hello, world"\n', 'linenos': False, 'language': u'python', 'style': u'friendly'}
+
+
 step 7: Using ModelSerializers
+
+
 
 step 8: Writign regular django views using our Serializer
 

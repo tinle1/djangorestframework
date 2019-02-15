@@ -1,0 +1,36 @@
+Tutorial 3: Class-based Views
+Step 1: Rewriting our API using class-based views
+
+We can also write our API view using class-based views rather than function based views. Help us keep our code DRY
+
+Rewriting our API using class-based views
+
+We'll start by rewriting the root view as a class-based view. All this involves is a little bit of refactoring of views.py
+
+from snippets.models import Snippet
+from snippets.srializers import SnippetSerializer
+from django.http import Http404
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework import status
+
+class SnippetList(APIView):
+	"""
+	List all snippets, or create a new snippet
+	"""
+
+	def get(self, request, format = None):
+		snippets = Snippet.object.all()
+		serializer = SnippetSerializer(snippets, many = True)
+		reuturn Response(serializer.data)
+
+	def post(self, request, format = None):
+		serializer = SnippetSerializer (data = request.data)
+		if serializer.is_valid():
+			serializer.save()
+			return Response(serializer.data, status=status.HTTP_201_CREATED)
+	        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+Step 2: Using mixins
+
+Step 3: Using generic class-based views

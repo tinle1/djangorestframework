@@ -28,4 +28,3 @@ python manage.py migrate
 step 6: create an initial user 
 
 python manage.py createsuperuser --email admin@example.com --username admin
-
